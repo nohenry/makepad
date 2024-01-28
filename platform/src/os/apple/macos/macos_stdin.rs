@@ -166,9 +166,14 @@ impl Cx {
                     self.call_event_handler(&Event::Scroll(e.into()))
                 }
                 HostToStdin::WindowGeomChange { dpi_factor, inner_width, inner_height } => {
+                    let old_safe_area = self.windows[CxWindowPool::id_zero()].window_geom.safe_area;
                     self.windows[CxWindowPool::id_zero()].window_geom = WindowGeom {
                         dpi_factor,
                         inner_size: dvec2(inner_width, inner_height),
+                        safe_area: Rect {
+                            size: dvec2(inner_width, inner_height),
+                            ..old_safe_area
+                        },
                         ..Default::default()
                     };
                     self.redraw_all();

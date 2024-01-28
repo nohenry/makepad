@@ -19,6 +19,7 @@ use {
         event::*,
         cursor::MouseCursor,
     },
+    makepad_shader_compiler::makepad_math::Rect,
 };
 
 #[derive(Clone)]
@@ -250,6 +251,7 @@ impl XlibWindow {
             is_fullscreen: self.get_is_maximized(),
             inner_size: self.get_inner_size(),
             outer_size: self.get_outer_size(),
+            safe_area: self.get_safe_area(),
             dpi_factor: self.get_dpi_factor(),
             position: self.get_position()
         }
@@ -341,6 +343,13 @@ impl XlibWindow {
             x11_sys::XGetWindowAttributes(display, self.window.unwrap(), xwa.as_mut_ptr());
             let xwa = xwa.assume_init();
             return DVec2 {x: xwa.width as f64, y: xwa.height as f64}
+        }
+    }
+
+    pub fn get_safe_area(&self) -> Rect {
+        Rect {
+            pos: DVec2{ x: 0.0, y: 0.0 },
+            size: self.get_inner_size(),
         }
     }
     

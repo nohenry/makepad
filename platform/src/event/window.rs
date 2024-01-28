@@ -18,6 +18,7 @@ pub struct WindowGeom {
     pub position: DVec2,
     pub inner_size: DVec2,
     pub outer_size: DVec2,
+    pub safe_area: Rect,
 }
  
 

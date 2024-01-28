@@ -128,6 +128,10 @@ impl WindowHandle {
         cx.windows[self.window_id()].main_pass_id = Some(pass.pass_id());
         cx.passes[pass.pass_id()].parent = CxPassParent::Window(self.window_id());
     }
+
+    pub fn get_safe_area(&mut self, cx: &mut Cx) -> Rect {
+        cx.windows[self.window_id()].get_safe_area()
+    }
     
     pub fn get_inner_size(&mut self, cx: &mut Cx) -> DVec2 {
         cx.windows[self.window_id()].get_inner_size()
@@ -194,7 +198,14 @@ pub struct CxWindow {
 }
 
 impl CxWindow {
-    
+    pub fn get_safe_area(&mut self) -> Rect {
+        if !self.is_created {
+            panic!();
+        } else {
+            self.window_geom.safe_area
+        }
+    }
+
     pub fn get_inner_size(&mut self) -> DVec2 {
         if !self.is_created {
             Default::default()

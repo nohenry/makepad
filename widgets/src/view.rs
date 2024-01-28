@@ -151,6 +151,8 @@ pub struct View {
     scroll_bars: Option<LivePtr>,
     #[live(false)]
     design_mode: bool,
+    #[live(false)]
+    safe: bool,
 
     #[rust]
     find_cache: HashMap<u64, WidgetSet>,
@@ -663,6 +665,17 @@ impl Widget for View {
     }
 
     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        let layout = if self.safe {
+            Layout {
+                padding: Padding {
+                    top: self.layout.padding.top + cx.safe_area.pos.y,
+                    left: self.layout.padding.left + cx.safe_area.pos.x,
+                    ..self.layout.padding
+                },
+                ..self.layout
+            }
+        } else {self.layout};
+
         // the beginning state
         if self.draw_state.begin(cx, DrawState::Drawing(0, false)) {
             if !self.visible {
@@ -754,7 +767,7 @@ impl Widget for View {
                 scroll_bars.begin_nav_area(cx);
                 scroll_bars.get_scroll_pos()
             } else {
-                self.layout.scroll
+                layout.scroll
             };
 
             if self.show_bg {
@@ -762,9 +775,9 @@ impl Widget for View {
                     self.draw_bg.draw_vars.set_texture(0, image_texture);
                 }*/
                 self.draw_bg
-                    .begin(cx, walk, self.layout.with_scroll(scroll)); //.with_scale(2.0 / self.dpi_factor.unwrap_or(2.0)));
+                    .begin(cx, walk, layout.with_scroll(scroll)); //.with_scale(2.0 / self.dpi_factor.unwrap_or(2.0)));
             } else {
-                cx.begin_turtle(walk, self.layout.with_scroll(scroll)); //.with_scale(2.0 / self.dpi_factor.unwrap_or(2.0)));
+                cx.begin_turtle(walk, layout.with_scroll(scroll)); //.with_scale(2.0 / self.dpi_factor.unwrap_or(2.0)));
             }
         }
 
@@ -880,8 +893,8 @@ impl Widget for View {
                 cx.debug.area(self.area, Vec4::R);
             }
             ViewDebug::P | ViewDebug::Padding => {
-                let tl = dvec2(-self.layout.padding.left, -self.walk.margin.top);
-                let br = dvec2(-self.layout.padding.right, -self.layout.padding.bottom);
+                let tl = dvec2(-layout.padding.left, -self.walk.margin.top);
+                let br = dvec2(-layout.padding.right, -layout.padding.bottom);
                 cx.debug.area_offset(self.area, tl, br, Vec4::G);
                 cx.debug.area(self.area, Vec4::R);
             }
@@ -889,8 +902,8 @@ impl Widget for View {
                 let tl = dvec2(self.walk.margin.left, self.walk.margin.top);
                 let br = dvec2(self.walk.margin.right, self.walk.margin.bottom);
                 cx.debug.area_offset(self.area, tl, br, Vec4::B);
-                let tl = dvec2(-self.layout.padding.left, -self.walk.margin.top);
-                let br = dvec2(-self.layout.padding.right, -self.layout.padding.bottom);
+                let tl = dvec2(-layout.padding.left, -self.walk.margin.top);
+                let br = dvec2(-layout.padding.right, -layout.padding.bottom);
                 cx.debug.area_offset(self.area, tl, br, Vec4::G);
                 cx.debug.area(self.area, Vec4::R);
             }

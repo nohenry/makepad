@@ -179,7 +179,7 @@ impl Window {
 impl Widget for Window {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
         let uid = self.widget_uid();
-        
+
         self.debug_view.handle_event(cx, event);
         if self.show_performance_view {
             self.performance_view.handle_widget(cx, event);
@@ -305,6 +305,7 @@ impl Widget for Window {
         }
         
         if let Some(DrawState::Drawing) = self.draw_state.get() {
+            cx.safe_area = self.window.get_safe_area(cx.cx);
             self.view.draw_walk(cx, scope, walk)?;
             self.draw_state.end();
             self.end(cx);

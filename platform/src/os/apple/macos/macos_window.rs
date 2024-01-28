@@ -1,5 +1,5 @@
 use {
-    std::{
+   std::{
         rc::Rc,
         cell::Cell,
         os::raw::{c_void}
@@ -38,7 +38,7 @@ use {
             TextInputEvent,
             DragItem,
         },
-    }
+    }, makepad_shader_compiler::makepad_math::Rect, 
 };
 
 #[derive(Clone)]
@@ -237,6 +237,7 @@ impl MacosWindow {
             can_fullscreen: false,
             inner_size: self.get_inner_size(),
             outer_size: self.get_outer_size(),
+            safe_area: self.get_safe_area(),
             dpi_factor: self.get_dpi_factor(),
             position: self.get_position()
         }
@@ -286,6 +287,24 @@ impl MacosWindow {
         window_frame.size.width = size.x;
         window_frame.size.height = size.y;
         unsafe {let () = msg_send![self.window, setFrame: window_frame display: YES];};
+    }
+
+    pub fn get_safe_area(&self) -> Rect {
+        let size = self.get_inner_size();
+
+        let content_view: *mut Object = unsafe {msg_send![self.window, contentView]};
+        let safe_area: NSRect = unsafe {msg_send![content_view, safeAreaRect]};
+
+        Rect {
+            pos: DVec2 {
+                x: size.x - safe_area.size.width,
+                y: size.y - safe_area.size.height
+            },
+            size: DVec2 {
+                x: safe_area.size.width,
+                y: safe_area.size.height
+            }
+        }
     }
     
     pub fn get_dpi_factor(&self) -> f64 {

@@ -258,6 +258,7 @@ use {
                 },
             },
         },
+        makepad_shader_compiler::makepad_math::Rect,
         event::*,
         area::Area,
         os::windows::{
@@ -857,6 +858,7 @@ impl Win32Window {
             is_fullscreen: self.get_is_maximized(),
             inner_size: if self.get_is_maximized(){self.get_outer_size()}else{self.get_inner_size()},
             outer_size: self.get_outer_size(),
+            safe_area: self.get_safe_area(),
             dpi_factor: self.get_dpi_factor(),
             position: self.get_position()
         }
@@ -906,6 +908,14 @@ impl Win32Window {
             GetWindowRect(self.hwnd, &mut rect).unwrap();
             let dpi = self.get_dpi_factor();
             DVec2 {x: (rect.right - rect.left) as f64/ dpi, y: (rect.bottom - rect.top)as f64/ dpi}
+        }
+    }
+
+    pub fn get_safe_area(&self) -> Rect {
+        let size = if self.get_is_maximized(){ self.get_outer_size() } else{ self.get_inner_size() };
+        Rect {
+            pos: DVec2{ x: 0.0, y: 0.0 },
+            size,
         }
     }
     
