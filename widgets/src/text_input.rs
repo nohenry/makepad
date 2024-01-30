@@ -3,7 +3,7 @@ use {
         makepad_derive_widget::*,
         makepad_draw::*,
         widget::*,
-    }
+    }, std::rc::Rc
 };
 
 live_design!{
@@ -347,6 +347,33 @@ impl Widget for TextInput {
     
     fn set_text(&mut self, v: &str) {
         self.filter_input(&v, None);
+    }
+
+
+    fn widget_to_data(&self, _cx: &mut Cx, actions:&Actions, nodes: &mut LiveNodeVec, path: &[LiveId])->bool{
+        match actions.find_widget_action_cast(self.widget_uid()) {
+            TextInputAction::Change(change) => {
+                nodes.write_field_value(path, LiveValue::String(Rc::new(change)));
+                true
+            }
+            _ => false
+        }
+    }
+    
+    fn data_to_widget(&mut self, cx: &mut Cx, nodes:&[LiveNode], path: &[LiveId]){
+        if let Some(value) = nodes.read_field_value(path) {
+            match value {
+                LiveValue::Str(s) => {
+                    self.set_text(s);
+                    self.redraw(cx);
+                }
+                LiveValue::String(s) => {
+                    self.set_text(s);
+                    self.redraw(cx);
+                }
+                _ => ()
+            }
+        }
     }
 }
 
