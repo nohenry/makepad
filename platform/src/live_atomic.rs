@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 use {
     std::fmt::{Formatter,Debug, Error},
-    std::marker::PhantomData,
+    std::{marker::PhantomData, sync::atomic::{AtomicPtr, AtomicUsize}},
     std::{
         sync::Arc,
         sync::atomic::{AtomicU32, AtomicI32, AtomicI64,  AtomicU64, Ordering, AtomicBool},
@@ -553,5 +553,89 @@ impl LiveNew for boola {
 impl LiveRead for boola{
     fn live_read_to(&self, id:LiveId, out:&mut Vec<LiveNode>){
         self.get().live_read_to(id, out);
+    }
+}
+
+pub struct Stringa(AtomicPtr<u8>, AtomicUsize);
+
+impl Clone for Stringa {
+    fn clone(&self)->Self {
+        self.get().to_string().into()
+    }
+}
+
+
+impl AtomicGetSet<&str> for Stringa {
+    fn get(&self) -> &'static str {
+        let ptr = self.0.load(Ordering::Relaxed);
+        let len = self.1.load(Ordering::Relaxed);
+
+        unsafe {
+            let slice = std::slice::from_raw_parts(ptr, len);
+            std::str::from_utf8_unchecked(slice)
+        }
+    }
+
+    fn set(&self, val: &str) {
+        let mut s = val.to_string();
+        self.0.store(s.as_mut_ptr(), Ordering::Relaxed);
+        self.1.store(s.len(), Ordering::Relaxed);
+
+        std::mem::forget(s);
+    }
+}
+
+impl LiveAtomic for Stringa {
+    fn apply_atomic(&self, cx: &mut Cx, apply: &mut Apply, index: usize, nodes: &[LiveNode]) -> usize {
+        let mut s = String::new();
+        let index = s.apply(cx, apply, index, nodes);
+
+        self.0.store(s.as_mut_ptr(), Ordering::Relaxed);
+        self.1.store(s.len(), Ordering::Relaxed);
+        std::mem::forget(s);
+
+        index
+    }
+}
+
+impl LiveHook for Stringa {}
+impl LiveApply for Stringa {
+    fn apply(&mut self, cx: &mut Cx, apply: &mut Apply, index: usize, nodes: &[LiveNode]) -> usize {
+        self.apply_atomic(cx, apply, index, nodes)
+    }
+}
+
+impl Debug for Stringa {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>{
+        self.get().fmt(f)
+    }
+}
+
+impl Into<Stringa> for String {
+    fn into(mut self) -> Stringa {
+        let value = Stringa(AtomicPtr::new(self.as_mut_ptr()), AtomicUsize::new(self.len()));
+        std::mem::forget(self);
+
+        value
+    }
+}
+
+impl LiveNew for Stringa {
+    fn new(_cx: &mut Cx) -> Self {
+        let mut s = String::new();
+        let value = Stringa(AtomicPtr::new(s.as_mut_ptr()), AtomicUsize::new(s.len()));
+        std::mem::forget(s);
+
+        value
+    }
+    
+    fn live_type_info(cx: &mut Cx) -> LiveTypeInfo {
+        String::live_type_info(cx)
+    }
+}
+
+impl LiveRead for Stringa {
+    fn live_read_to(&self, id:LiveId, out:&mut Vec<LiveNode>){
+        self.get().to_string().live_read_to(id, out);
     }
 }
