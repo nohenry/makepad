@@ -17,6 +17,7 @@ pub trait WidgetMatchEvent{
             Event::MidiPorts(e)=>self.handle_midi_ports(cx, e, scope),
             Event::VideoInputs(e)=>self.handle_video_inputs(cx, e, scope),
             Event::NetworkResponses(e)=>self.handle_network_responses(cx, e, scope),
+            Event::Signal=>self.handle_signal(cx, scope),
             _=>()
         }
     }
