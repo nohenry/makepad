@@ -29,6 +29,8 @@ pub struct Button {
     label_walk: Walk,
     #[walk]
     walk: Walk,
+    #[live]
+    reset_on_up: bool,
 
     #[layout]
     layout: Layout,
@@ -65,7 +67,7 @@ impl Widget for Button {
                     cx.widget_action(uid, &scope.path, ButtonAction::Released);
                     if fe.device.has_hovers() {
                         self.animator_play(cx, id!(hover.on));
-                    } else {
+                    } else if self.reset_on_up {
                         self.animator_play(cx, id!(hover.off));
                     }
                 } else {

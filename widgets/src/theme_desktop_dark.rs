@@ -298,11 +298,12 @@ live_design! {
             uniform border_radius: 3.0
             instance bodytop: #53
             instance bodybottom: #5c
+            instance bodypressed: #33
             fn pixel(self) -> vec4 {
                 let sdf = Sdf2d::viewport(self.pos * self.rect_size);
                 let grad_top = 5.0;
                 let grad_bot = 1.0;
-                let body = mix(mix(self.bodytop, self.bodybottom, self.hover), #33, self.pressed);
+                let body = mix(mix(self.bodytop, self.bodybottom, self.hover), self.bodypressed, self.pressed);
                 let body_transp = vec4(body.xyz, 0.0);
                 let top_gradient = mix(body_transp, mix(#6d, #1f, self.pressed), max(0.0, grad_top - sdf.pos.y) / grad_top);
                 let bot_gradient = mix(
